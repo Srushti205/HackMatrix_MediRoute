@@ -1,48 +1,40 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
-    "./public/index.html",
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
       colors: {
-        primary: {
-          50:  '#eef7ff',
-          100: '#d9edff',
-          200: '#bbdeff',
-          300: '#8ec8ff',
-          400: '#5aaeff',
-          500: '#3090ff',
-          600: '#1a70f5',
-          700: '#1458e1',
-          800: '#1747b6',
-          900: '#193f8f',
-          950: '#142857',
-        },
-        accent: {
-          50:  '#f0fdf4',
-          100: '#dcfce7',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-        },
-        danger: {
-          500: '#ef4444',
-          600: '#dc2626',
-        },
+        brand: {
+          lightYellow: '#FAF8AB',
+          softYellow: '#FFFEC5',
+          lighterYellow: '#FFFFE2',
+          primaryGreen: '#71BC75',
+          darkGreen: '#00A551',
+          darkText: '#4A4A4A',
+          secondaryText: '#687280',
+          softGreenBg: '#E8F6E9',
+          error: '#FFCEEB',
+          warmWarning: '#FFF7D1',
+          warmBg: '#FAF9F5',
+          cardBg: '#FFFFFF',
+          cardBorder: '#E6ECE3',
+        }
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        'card': '0 4px 20px -2px rgba(113, 188, 117, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.03)',
+        'card-hover': '0 12px 30px -4px rgba(0, 165, 81, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.04)',
       },
       borderRadius: {
         '2xl': '1rem',
         '3xl': '1.5rem',
-      },
-      boxShadow: {
-        glass: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-      },
+      }
     },
   },
   plugins: [],
-};
+}
