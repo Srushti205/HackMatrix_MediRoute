@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function RoleCard({
   title,
@@ -19,9 +19,6 @@ export default function RoleCard({
     }
   };
 
-  // Button color variants per user specifications
-  // Dispatcher: Dark/primary green (#00A551)
-  // Hospital: Primary/medium green (#71BC75)
   const buttonStyle =
     buttonColor === 'dark'
       ? 'bg-[#00A551] hover:bg-[#008f45] active:bg-[#007b3b] text-white shadow-sm hover:shadow-md'
@@ -30,7 +27,8 @@ export default function RoleCard({
   return (
     <div
       id={cardId}
-      className="group relative flex flex-col justify-between h-full bg-[#FFFFFF] rounded-3xl p-7 sm:p-8 lg:p-9 border border-[#E6ECE3] shadow-[0_4px_22px_-2px_rgba(30,60,35,0.05),0_1px_4px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_36px_-4px_rgba(0,165,81,0.12),0_2px_8px_rgba(0,0,0,0.03)] hover:-translate-y-1.5 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#71BC75]/40"
+      onClick={handleNavigate}
+      className="group relative flex flex-col justify-between h-full bg-[#FFFFFF] rounded-3xl p-7 sm:p-8 lg:p-9 border border-[#E6ECE3] shadow-[0_4px_22px_-2px_rgba(30,60,35,0.05),0_1px_4px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_36px_-4px_rgba(0,165,81,0.12),0_2px_8px_rgba(0,0,0,0.03)] hover:-translate-y-1.5 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#71BC75]/40 cursor-pointer"
     >
       {/* ── Upper: Illustration with ample whitespace ── */}
       <div className="w-full flex-1 flex items-center justify-center min-h-[190px] sm:min-h-[210px] mb-6 px-2 overflow-hidden rounded-2xl bg-[#FCFDFC]/50">
@@ -47,16 +45,18 @@ export default function RoleCard({
         </p>
       </div>
 
-      {/* ── Bottom: Action Button ── */}
+      {/* ── Bottom: Action Button (Link-backed for reliable navigation) ── */}
       <div className="w-full">
-        <button
+        <Link
           id={buttonId}
-          type="button"
-          onClick={handleNavigate}
-          className={`w-full py-3.5 px-6 rounded-xl font-semibold text-sm sm:text-base flex items-center justify-center gap-2.5 cursor-pointer transition-all duration-200 transform group-hover:brightness-105 active:scale-[0.99] select-none ${buttonStyle}`}
+          to={to || '#'}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          className={`w-full py-3.5 px-6 rounded-xl font-semibold text-sm sm:text-base flex items-center justify-center gap-2.5 cursor-pointer transition-all duration-200 transform group-hover:brightness-105 active:scale-[0.99] select-none text-center ${buttonStyle}`}
         >
-          <span>{buttonText}</span>
-        </button>
+          {buttonText}
+        </Link>
       </div>
     </div>
   );

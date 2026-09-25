@@ -42,7 +42,7 @@ export default function RoleSelection() {
             illustration={DispatcherIllustration}
             buttonText="Continue as Dispatcher →"
             buttonColor="dark"
-            to="/login/dispatcher"
+            to="/dispatcher"
           />
 
           {/* Card 2 — Hospital */}

@@ -47,13 +47,12 @@ export default function DispatcherLogin() {
               className="w-full px-4 py-3 rounded-xl border border-[#D7E3D5] bg-[#FAF9F5] text-sm text-[#687280] cursor-not-allowed"
             />
           </div>
-          <button
-            type="button"
-            disabled
-            className="w-full py-3.5 px-6 rounded-xl font-semibold text-white bg-[#00A551] opacity-90 cursor-not-allowed text-sm shadow-sm"
+          <Link
+            to="/dispatcher"
+            className="w-full py-3.5 px-6 rounded-xl font-semibold text-white bg-[#00A551] hover:bg-[#008f45] active:bg-[#007b3b] text-sm shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
           >
-            Authenticate (Coming Soon)
-          </button>
+            Enter Dispatcher Dashboard →
+          </Link>
         </div>
 
         <Link
