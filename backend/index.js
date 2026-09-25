@@ -5,7 +5,6 @@ const helmet     = require('helmet');
 const morgan     = require('morgan');
 const connectDB  = require('./src/config/db');
 
-// ── Routes ────────────────────────────────────────────────────
 const healthRouter = require('./src/routes/health.routes');
 
 const app  = express();
