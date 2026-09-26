@@ -44,10 +44,17 @@ export default function EmergencyCard({ emergency, isSelected = false, onSelect 
           </span>
         </div>
 
-        {/* ETA */}
-        <div className="inline-flex items-center gap-1 shrink-0 font-semibold text-[#00A551] bg-[#E8F6E9] px-2 py-0.5 rounded-md">
-          <Clock className="w-3 h-3 text-[#00A551]" />
-          <span>ETA: {eta}</span>
+        {/* ETA & Distance */}
+        <div className="inline-flex items-center gap-1.5 shrink-0 font-semibold text-[#00A551] bg-[#E8F6E9] px-2 py-0.5 rounded-md">
+          {emergency.distanceKm && (
+            <span className="font-bold text-[#008f45] border-r border-[#00A551]/30 pr-1.5">
+              {emergency.distanceKm}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1">
+            <Clock className="w-3 h-3 text-[#00A551]" />
+            <span>ETA: {eta}</span>
+          </span>
         </div>
       </div>
     </div>

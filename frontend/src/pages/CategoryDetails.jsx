@@ -154,6 +154,7 @@ export default function CategoryDetails() {
           <div className="w-full lg:w-[50%] xl:w-[52%] h-full relative overflow-hidden border-t lg:border-t-0 lg:border-l border-[#E6ECE3]">
             <EmergencyMapPanel
               location={basicInfo.location || 'Shivajinagar, Pune, Maharashtra, India'}
+              patientLocation={basicInfo.patientLocation}
             />
           </div>
         </div>

@@ -5,6 +5,11 @@ const EmergencyContext = createContext(null);
 export const DEFAULT_BASIC_INFO = {
   selectedEmergencyCategory: 'Trauma',
   location: 'Shivajinagar, Pune, Maharashtra, India',
+  patientLocation: {
+    address: 'Shivajinagar, Pune, Maharashtra, India',
+    latitude: 18.5314,
+    longitude: 73.8446,
+  },
   casualties: 1,
   consciousAndBreathing: true,
   age: 28,

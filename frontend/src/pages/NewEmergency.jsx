@@ -24,7 +24,24 @@ export default function NewEmergency() {
   const responseType = basicInfo.responseType;
 
   const setSelectedEmergencyCategory = (val) => updateBasicInfo({ selectedEmergencyCategory: val });
-  const setLocation = (val) => updateBasicInfo({ location: val });
+  const handleLocationUpdate = (val) => {
+    if (typeof val === 'string') {
+      updateBasicInfo({
+        location: val,
+        patientLocation: {
+          address: val,
+          latitude: basicInfo.patientLocation?.latitude || 18.5204,
+          longitude: basicInfo.patientLocation?.longitude || 73.8567,
+        },
+      });
+    } else if (val && typeof val === 'object') {
+      updateBasicInfo({
+        location: val.address || '',
+        patientLocation: val,
+      });
+    }
+    if (errorMessage) setErrorMessage('');
+  };
   const setCasualties = (val) => updateBasicInfo({ casualties: val });
   const setConsciousAndBreathing = (val) => updateBasicInfo({ consciousAndBreathing: val });
   const setAge = (val) => updateBasicInfo({ age: val });
@@ -44,8 +61,8 @@ export default function NewEmergency() {
       setErrorMessage('Please select an emergency category.');
       return;
     }
-    if (!location || location.trim() === '') {
-      setErrorMessage('Please provide a valid location or landmark.');
+    if (!location || location.trim() === '' || !basicInfo.patientLocation?.address) {
+      setErrorMessage("Please select the patient's location.");
       return;
     }
     if (!casualties || casualties < 1) {
@@ -62,6 +79,7 @@ export default function NewEmergency() {
     navigate('/new-emergency/category-details', {
       state: {
         selectedEmergencyCategory,
+        patientLocation: basicInfo.patientLocation,
       },
     });
   };
@@ -157,11 +175,10 @@ export default function NewEmergency() {
                 <div className="pt-1">
                   <LocationSearch
                     locationValue={location}
-                    onLocationChange={(newLoc) => {
-                      setLocation(newLoc);
-                      if (errorMessage) setErrorMessage('');
-                    }}
-                    onClearLocation={() => setLocation('')}
+                    onLocationChange={handleLocationUpdate}
+                    onClearLocation={() =>
+                      handleLocationUpdate({ address: '', latitude: null, longitude: null })
+                    }
                   />
                 </div>
               </section>
@@ -275,7 +292,8 @@ export default function NewEmergency() {
           <div className="w-full lg:w-[50%] xl:w-[52%] h-full relative overflow-hidden border-t lg:border-t-0 lg:border-l border-[#E6ECE3]">
             <EmergencyMapPanel
               location={location}
-              onLocationSelect={(newLoc) => setLocation(newLoc)}
+              patientLocation={basicInfo.patientLocation}
+              onLocationSelect={handleLocationUpdate}
             />
           </div>
         </div>
