@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopNavbar from '../components/TopNavbar';
 import MapView from '../components/MapView';
 import DispatchPanel from '../components/DispatchPanel';
@@ -36,6 +37,7 @@ class MapErrorBoundary extends React.Component {
 }
 
 export default function DispatcherDashboard() {
+  const navigate = useNavigate();
   const [emergencies, setEmergencies] = useState(mockEmergencies);
   const [selectedEmergencyId, setSelectedEmergencyId] = useState('EM-1042');
   const [activeNav, setActiveNav] = useState('Home');
@@ -107,7 +109,7 @@ export default function DispatcherDashboard() {
             emergencies={emergencies}
             selectedEmergencyId={selectedEmergencyId}
             onSelectEmergency={handleSelectEmergency}
-            onNewEmergency={() => setShowNewEmergencyModal(true)}
+            onNewEmergency={() => navigate('/new-emergency')}
           />
         </section>
       </main>

@@ -28,7 +28,7 @@ export default function NewEmergencyCard({ onNewEmergency }) {
           className="w-full py-3 px-4 rounded-xl font-semibold text-sm text-white bg-[#00A551] hover:bg-[#008f45] active:bg-[#007b3b] shadow-sm hover:shadow transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>+ New Emergency</span>
+          <span>New Emergency</span>
         </button>
       </div>
     </div>
