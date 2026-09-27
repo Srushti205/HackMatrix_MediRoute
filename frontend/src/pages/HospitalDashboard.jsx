@@ -35,6 +35,8 @@ export default function HospitalDashboard() {
   const [secondsLeft, setSecondsLeft] = useState(90);
   const [toast, setToast] = useState(null);
   const [lastSynced, setLastSynced] = useState('just now');
+  const [bloodStock, setBloodStock] = useState(initialBloodStock);
+  const [specialists, setSpecialists] = useState(initialSpecialistResources);
 
   useEffect(() => {
     if (!incomingRequest) return undefined;
@@ -151,13 +153,35 @@ export default function HospitalDashboard() {
             </section>
 
             <section className="rounded-3xl border border-[#E6ECE3] bg-white p-5 shadow-[0_4px_20px_-2px_rgba(113,188,117,0.08)] sm:p-6">
-              <SectionHeading icon={Droplets} title="Blood Bank Snapshot" subtitle="Live stock by blood group for emergency matching." badge="Emergency release enabled" />
+              <SectionHeading icon={Droplets} title="Blood Reserve" subtitle="Live stock by blood group for emergency matching. Adjust counts as units are used or restocked." badge="+ / − controls" />
               <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-                {initialBloodStock.map((item) => (
+                {bloodStock.map((item) => (
                   <div key={item.group} className={`rounded-2xl border p-3 text-center ${item.critical ? 'border-[#E9D98D] bg-[#FFF7D1]' : 'border-[#E6ECE3] bg-[#FAF9F5]'}`}>
                     <p className="text-xs font-extrabold text-[#3A3D40]">{item.group}</p>
                     <p className={`mt-1 text-xl font-extrabold ${item.critical ? 'text-[#8A6500]' : 'text-[#00A551]'}`}>{item.units}</p>
                     <p className="text-[9px] font-semibold uppercase tracking-wider text-[#687280]">units</p>
+                    <div className="mt-2 flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBloodStock((prev) => prev.map((b) => b.group === item.group ? { ...b, units: Math.max(0, b.units - 1), critical: Math.max(0, b.units - 1) <= 6 } : b));
+                          setLastSynced('just now');
+                        }}
+                        className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border border-[#E6ECE3] bg-white text-sm font-bold text-[#687280] hover:border-[#B42318] hover:text-[#B42318] active:scale-95"
+                      >
+                        −
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBloodStock((prev) => prev.map((b) => b.group === item.group ? { ...b, units: b.units + 1, critical: b.units + 1 <= 6 } : b));
+                          setLastSynced('just now');
+                        }}
+                        className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border border-[#E6ECE3] bg-white text-sm font-bold text-[#687280] hover:border-[#00A551] hover:text-[#00A551] active:scale-95"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -193,10 +217,27 @@ export default function HospitalDashboard() {
             <section className="rounded-3xl border border-[#E6ECE3] bg-white p-5 shadow-[0_4px_20px_-2px_rgba(113,188,117,0.08)] sm:p-6">
               <SectionHeading icon={Stethoscope} title="Specialist Coverage" subtitle="Availability used by clinical capability filtering." />
               <div className="mt-3 divide-y divide-[#F0F4EF]">
-                {initialSpecialistResources.map((resource) => (
+                {specialists.map((resource) => (
                   <div key={resource.id} className="flex items-center justify-between py-3 first:pt-1 last:pb-1">
                     <span className="text-sm font-semibold text-[#3A3D40]">{resource.label}</span>
-                    <SpecialistStatus status={resource.status} />
+                    <select
+                      value={resource.status}
+                      onChange={(e) => {
+                        setSpecialists((prev) => prev.map((s) => s.id === resource.id ? { ...s, status: e.target.value } : s));
+                        setLastSynced('just now');
+                      }}
+                      className={`cursor-pointer rounded-full border px-2.5 py-1 text-[10px] font-bold outline-none appearance-none text-center ${
+                        resource.status === 'On site'
+                          ? 'border-[#71BC75]/30 bg-[#E8F6E9] text-[#00A551]'
+                          : resource.status === 'On call'
+                            ? 'border-[#E9D98D] bg-[#FFF7D1] text-[#8A6500]'
+                            : 'border-[#F2C4C0] bg-[#FFF1F0] text-[#B42318]'
+                      }`}
+                    >
+                      <option value="On site">On site</option>
+                      <option value="On call">On call</option>
+                      <option value="Unavailable">Unavailable</option>
+                    </select>
                   </div>
                 ))}
               </div>

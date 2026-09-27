@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bell, ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function HospitalTopNavbar({ hospitalName }) {
@@ -33,23 +33,14 @@ export default function HospitalTopNavbar({ hospitalName }) {
           </Link>
 
           <nav className="hidden items-center gap-1.5 md:flex">
-            {['Overview', 'Resources', 'Incoming', 'Activity'].map((item, index) => (
-              <button key={item} type="button" className={`cursor-pointer rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${index === 0 ? 'bg-[#E8F6E9] font-semibold text-[#00A551]' : 'text-[#687280] hover:bg-[#FAF9F5] hover:text-[#00A551]'}`}>
-                {item}
-              </button>
-            ))}
+            <button type="button" className="cursor-pointer rounded-lg bg-[#E8F6E9] px-3.5 py-1.5 text-sm font-semibold text-[#00A551] transition-colors">
+              Overview
+            </button>
           </nav>
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="hidden items-center gap-2 rounded-full border border-[#71BC75]/30 bg-[#E8F6E9] px-3 py-1.5 text-xs font-semibold text-[#00A551] lg:flex">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#00A551]" />
-            Live Sync
-          </div>
-          <button type="button" className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-[#5A6578] hover:bg-[#FAF9F5]" aria-label="Notifications">
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#00A551]" />
-          </button>
+
 
           <div ref={ref} className="relative">
             <button type="button" onClick={() => setIsOpen((value) => !value)} className="flex cursor-pointer items-center gap-2.5 rounded-full border border-transparent px-2.5 py-1.5 hover:border-[#E6ECE3] hover:bg-[#FAF9F5]">

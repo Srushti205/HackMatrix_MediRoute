@@ -49,8 +49,7 @@ export default function RoleSelection() {
           <RoleCard
             cardId="role-card-hospital"
             buttonId="btn-continue-hospital"
-            title="Hospital"
-            description="Manage hospital capacity, resources, and incoming patients."
+            title="Simulated Hospital"
             illustration={HospitalIllustration}
             buttonText="Continue as Hospital →"
             buttonColor="primary"

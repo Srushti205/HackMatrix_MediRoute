@@ -8,6 +8,8 @@ import NewEmergency from './pages/NewEmergency';
 import CategoryDetails from './pages/CategoryDetails';
 import { EmergencyProvider } from './context/EmergencyContext';
 import HospitalDashboard from './pages/HospitalDashboard';
+import AmbulancesPage from './pages/AmbulancesPage';
+import LogisticsPage from './pages/LogisticsPage';
 
 export default function App() {
   return (
@@ -25,6 +27,8 @@ export default function App() {
           <Route path="/dispatcher/new-emergency/category-details" element={<CategoryDetails />} />
           <Route path="/hospital" element={<HospitalDashboard />} />
           <Route path="/dashboard/hospital" element={<HospitalDashboard />} />
+          <Route path="/ambulances" element={<AmbulancesPage />} />
+          <Route path="/logistics" element={<LogisticsPage />} />
           {/* Catch-all redirect to role selection */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1,7 +1,6 @@
 import React from 'react';
-import ResponseTypeSelector from '../ResponseTypeSelector';
 
-export default function CategoryHeader({ config, responseType, onResponseTypeChange }) {
+export default function CategoryHeader({ config }) {
   const IconComponent = config?.icon;
 
   return (
@@ -15,12 +14,6 @@ export default function CategoryHeader({ config, responseType, onResponseTypeCha
             <span className="w-1.5 h-1.5 rounded-full bg-[#00A551] animate-pulse" />
             Active
           </span>
-          <div className="ml-0.5 sm:ml-1.5">
-            <ResponseTypeSelector
-              value={responseType}
-              onChange={onResponseTypeChange}
-            />
-          </div>
         </div>
         <p className="text-xs sm:text-sm text-[#687280] mt-1 font-medium">
           Provide additional information about the selected emergency.

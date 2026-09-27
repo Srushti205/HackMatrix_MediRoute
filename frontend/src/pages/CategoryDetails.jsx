@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import TopNavbar from '../components/TopNavbar';
-import LeftSidebar from '../components/LeftSidebar';
 import EmergencyMapPanel from '../components/EmergencyMapPanel';
 import CategoryHeader from '../components/category/CategoryHeader';
 import QuestionCard from '../components/category/QuestionCard';
 import { getCategoryConfig } from '../data/categoryQuestions';
 import { useEmergency } from '../context/EmergencyContext';
+import ResponseTypeSelector from '../components/ResponseTypeSelector';
 import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function CategoryDetails() {
   const navigate = useNavigate();
   const routeLocation = useLocation();
   const { basicInfo, updateBasicInfo, categoryAnswers, updateCategoryAnswer } = useEmergency();
+
+  // Whether ambulance was already booked on page 1 (via ALS/BLS click)
+  const ambulanceBooked = routeLocation.state?.ambulanceBooked === true;
 
   // Shared response type (ALS / BLS)
   const responseType = basicInfo.responseType;
@@ -43,16 +46,15 @@ export default function CategoryDetails() {
   };
 
   const handleBack = () => {
-    // Navigate back to Basic Information screen without losing data
     navigate('/new-emergency');
   };
 
   const handleSubmit = () => {
-    // Validate each question in the active category
+    // For yes_no questions treat null/undefined as 'No' (default) — count as answered
     const missing = [];
-
     config.questions.forEach((q) => {
       const val = answersForCategory[q.id];
+      if (q.type === 'yes_no') return; // yes/no always has a default of 'No'
       if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '')) {
         missing.push(q.id);
       }
@@ -70,29 +72,29 @@ export default function CategoryDetails() {
     }, 4500);
   };
 
+  // ALS/BLS clicked on page 2 → show ambulance booked popup
+  const handleResponseTypeClick = (type) => {
+    handleResponseTypeChange(type);
+    setToastMessage(`🚑 Ambulance Booked — ${type} unit dispatched`);
+    setTimeout(() => setToastMessage(null), 2000);
+  };
+
   return (
     <div className="min-h-screen h-screen flex flex-col bg-[#FAF9F5] text-[#4A4A4A] overflow-hidden select-none font-sans">
-      {/* ── Top Navbar with Step 2 Active Indicator ── */}
-      <TopNavbar showWorkflowProgress={true} currentStep={2} />
+      {/* ── Top Navbar ── */}
+      <TopNavbar />
 
-      {/* ── Main Application Shell: Sidebar + 2-Panel Content ── */}
+      {/* ── Main Application Shell: 2-Panel Content ── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* LEFT: Sidebar Navigation */}
-        <LeftSidebar activeItem="New Emergency" />
-
         {/* ── 2-PANEL WORKSPACE ── */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           {/* ════ LEFT PANEL: Category Questionnaire (~50% width) ════ */}
           <div className="w-full lg:w-[50%] xl:w-[48%] h-full overflow-y-auto p-4 sm:p-5 lg:p-6 bg-[#FAF9F5]">
             <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-[#E6ECE3] shadow-sm p-5 sm:p-6 space-y-6">
               {/* Category Page Header */}
-              <CategoryHeader
-                config={config}
-                responseType={responseType}
-                onResponseTypeChange={handleResponseTypeChange}
-              />
+              <CategoryHeader config={config} />
 
-              {/* Validation alert banner if attempting to submit with unanswered fields */}
+              {/* Validation alert banner */}
               {unansweredFields.length > 0 && (
                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#FFF5F5] border border-[#EF4444]/30 text-xs font-semibold text-[#DC2626] animate-in fade-in duration-150">
                   <AlertCircle className="w-4 h-4 shrink-0 text-[#EF4444]" />
@@ -116,7 +118,7 @@ export default function CategoryDetails() {
                       <QuestionCard
                         index={index}
                         question={question}
-                        value={answersForCategory[question.id]}
+                        value={question.type === 'yes_no' && (answersForCategory[question.id] === null || answersForCategory[question.id] === undefined) ? 'No' : answersForCategory[question.id]}
                         unitValue={question.unitKey ? answersForCategory[question.unitKey] : undefined}
                         onChange={handleFieldChange}
                         onUnitChange={handleUnitChange}
@@ -138,14 +140,25 @@ export default function CategoryDetails() {
                   <span>Back</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#00A551] hover:bg-[#008f45] active:bg-[#007b3b] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer select-none"
-                >
-                  <span>Run Triage &amp; Rank Hospitals</span>
-                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-                </button>
+                <div className="flex items-center gap-2.5">
+                  {/* Only show ALS/BLS if ambulance was NOT already booked on page 1 */}
+                  {!ambulanceBooked && (
+                    <ResponseTypeSelector
+                      value={responseType}
+                      onChange={handleResponseTypeClick}
+                      size="large"
+                    />
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#00A551] hover:bg-[#008f45] active:bg-[#007b3b] text-white text-sm font-bold shadow-md hover:shadow-lg transition-all cursor-pointer select-none"
+                  >
+                    <span>Run and Rank</span>
+                    <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -160,7 +173,7 @@ export default function CategoryDetails() {
         </div>
       </div>
 
-      {/* ── Feedback Notification Toast ── */}
+      {/* ── Feedback / Ambulance Booked Toast ── */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-[999] flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-[#00A551] text-white text-sm font-semibold shadow-2xl animate-in slide-in-from-bottom-3 duration-200">
           <CheckCircle2 className="w-5 h-5 text-[#FFFEC5] shrink-0" />

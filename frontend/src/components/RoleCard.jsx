@@ -40,9 +40,11 @@ export default function RoleCard({
         <h2 className="text-2xl sm:text-[26px] font-bold text-[#2A362C] tracking-tight mb-2.5">
           {title}
         </h2>
-        <p className="text-sm sm:text-[15px] leading-relaxed text-[#687280] max-w-xs font-normal">
-          {description}
-        </p>
+        {description && (
+          <p className="text-sm sm:text-[15px] leading-relaxed text-[#687280] max-w-xs font-normal">
+            {description}
+          </p>
+        )}
       </div>
 
       {/* ── Bottom: Action Button (Link-backed for reliable navigation) ── */}

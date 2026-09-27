@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNavbar from '../components/TopNavbar';
-import LeftSidebar from '../components/LeftSidebar';
 import EmergencyCategoryGrid from '../components/EmergencyCategoryGrid';
 import LocationSearch from '../components/LocationSearch';
 import CasualtyStepper from '../components/CasualtyStepper';
@@ -55,45 +54,43 @@ export default function NewEmergency() {
     navigate('/dashboard');
   };
 
-  const handleNext = () => {
-    // Validate required fields
-    if (!selectedEmergencyCategory) {
-      setErrorMessage('Please select an emergency category.');
-      return;
-    }
-    if (!location || location.trim() === '' || !basicInfo.patientLocation?.address) {
-      setErrorMessage("Please select the patient's location.");
-      return;
-    }
-    if (!casualties || casualties < 1) {
-      setErrorMessage('Number of casualties must be at least 1.');
-      return;
-    }
-    if (age === '' || isNaN(age) || age < 0 || age > 130) {
-      setErrorMessage('Please enter a valid patient age (0-130).');
-      return;
-    }
-
+  const validate = () => {
+    if (!selectedEmergencyCategory) { setErrorMessage('Please select an emergency category.'); return false; }
+    if (!location || location.trim() === '' || !basicInfo.patientLocation?.address) { setErrorMessage("Please select the patient's location."); return false; }
+    if (!casualties || casualties < 1) { setErrorMessage('Number of casualties must be at least 1.'); return false; }
+    if (age === '' || isNaN(age) || age < 0 || age > 130) { setErrorMessage('Please enter a valid patient age (0-130).'); return false; }
     setErrorMessage('');
-    // Navigate to Screen 2 (Category Details) with preserved state
+    return true;
+  };
+
+  // ALS/BLS clicked → validate → show popup → navigate (ambulance already booked)
+  const handleResponseTypeClick = (type) => {
+    setResponseType(type);
+    if (!validate()) return;
+    setToastMessage(`🚑 Ambulance Booked — ${type} unit dispatched`);
+    setTimeout(() => {
+      setToastMessage(null);
+      navigate('/new-emergency/category-details', {
+        state: { selectedEmergencyCategory, patientLocation: basicInfo.patientLocation, ambulanceBooked: true },
+      });
+    }, 1500);
+  };
+
+  // Next clicked → validate → navigate directly (ambulance NOT yet booked)
+  const handleNext = () => {
+    if (!validate()) return;
     navigate('/new-emergency/category-details', {
-      state: {
-        selectedEmergencyCategory,
-        patientLocation: basicInfo.patientLocation,
-      },
+      state: { selectedEmergencyCategory, patientLocation: basicInfo.patientLocation, ambulanceBooked: false },
     });
   };
 
   return (
     <div className="min-h-screen h-screen flex flex-col bg-[#FAF9F5] text-[#4A4A4A] overflow-hidden select-none font-sans">
-      {/* ── Top Navbar with Step 1 Active Indicator ── */}
-      <TopNavbar showWorkflowProgress={true} currentStep={1} />
+      {/* ── Top Navbar ── */}
+      <TopNavbar />
 
-      {/* ── Main Application Shell: Sidebar + 2-Panel Content ── */}
+      {/* ── Main Application Shell: 2-Panel Content ── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* LEFT: Sidebar Navigation */}
-        <LeftSidebar activeItem="New Emergency" />
-
         {/* ── 2-PANEL WORKSPACE ── */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           {/* ════ LEFT PANEL: Questionnaire Form (~50% width) ════ */}
@@ -272,13 +269,14 @@ export default function NewEmergency() {
                 <div className="flex items-center gap-2.5">
                   <ResponseTypeSelector
                     value={responseType}
-                    onChange={setResponseType}
+                    onChange={handleResponseTypeClick}
+                    size="large"
                   />
 
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#00A551] hover:bg-[#008f45] active:bg-[#007b3b] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer select-none"
+                    className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#00A551] hover:bg-[#008f45] active:bg-[#007b3b] text-white text-sm font-bold shadow-md hover:shadow-lg transition-all cursor-pointer select-none"
                   >
                     <span>Next</span>
                     <ArrowRight className="w-4 h-4 stroke-[2.5]" />

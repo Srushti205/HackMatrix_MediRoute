@@ -1,7 +1,6 @@
 import React from 'react';
 import NewEmergencyCard from './NewEmergencyCard';
 import EmergencyList from './EmergencyList';
-import { Activity } from 'lucide-react';
 
 export default function DispatchPanel({
   emergencies = [],
@@ -24,10 +23,6 @@ export default function DispatchPanel({
             <p className="text-xs text-[#687280] mt-0.5 font-normal">
               Real-time emergency fleet & facility orchestration
             </p>
-          </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E8F6E9] border border-[#71BC75]/30 text-[#00A551] text-xs font-medium">
-            <Activity className="w-3.5 h-3.5 animate-pulse text-[#00A551]" />
-            <span>Live Sync</span>
           </div>
         </div>
       </div>
