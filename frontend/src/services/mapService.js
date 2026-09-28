@@ -106,6 +106,7 @@ export async function loadGoogleMaps() {
       await Promise.all([
         importLibrary('places').catch((e) => console.warn('Places library load warning:', e)),
         importLibrary('geometry').catch((e) => console.warn('Geometry library load warning:', e)),
+        importLibrary('routes').catch((e) => console.warn('Routes library load warning:', e)),
       ]);
       return window.google.maps;
     })().catch((err) => {
@@ -612,6 +613,100 @@ export async function resolvePuneLocation(query) {
   return null;
 }
 
+
+/**
+ * Normalizes a location object/string for the Maps JavaScript Routes Library.
+ * Coordinates are preferred because the dispatcher already resolves the patient's
+ * address to latitude/longitude before routing.
+ */
+export function normalizeRouteLocation(location) {
+  if (!location) return null;
+  if (typeof location === 'string') return location;
+
+  if (Number.isFinite(Number(location.latitude)) && Number.isFinite(Number(location.longitude))) {
+    return { lat: Number(location.latitude), lng: Number(location.longitude) };
+  }
+
+  if (Number.isFinite(Number(location.lat)) && Number.isFinite(Number(location.lng))) {
+    return { lat: Number(location.lat), lng: Number(location.lng) };
+  }
+
+  if (location.placeId) return { placeId: location.placeId };
+  return null;
+}
+
+/**
+ * Calculates a real driving route using Google's current Maps JavaScript Routes Library.
+ * The response uses a traffic-aware driving route and returns distance, ETA and the road path.
+ */
+export async function computeDrivingRoute(origin, destination, options = {}) {
+  await loadGoogleMaps();
+
+  const routesLibrary = await window.google.maps.importLibrary('routes');
+  const Route = routesLibrary?.Route;
+  if (!Route) {
+    throw new Error('Google Routes Library could not be loaded. Make sure Routes API is enabled for the key.');
+  }
+
+  const normalizedOrigin = normalizeRouteLocation(origin);
+  const normalizedDestination = normalizeRouteLocation(destination);
+
+  if (!normalizedOrigin || !normalizedDestination) {
+    throw new Error('A valid route origin and destination are required.');
+  }
+
+  const trafficAware = options.trafficAware !== false;
+  const request = {
+    origin: normalizedOrigin,
+    destination: normalizedDestination,
+    travelMode: 'DRIVING',
+    routingPreference: trafficAware ? 'TRAFFIC_AWARE' : 'TRAFFIC_UNAWARE',
+    fields: ['path', 'distanceMeters', 'durationMillis', 'staticDurationMillis', 'viewport'],
+  };
+
+  const response = await Route.computeRoutes(request);
+  const route = response?.routes?.[0];
+  if (!route) {
+    throw new Error('Google Routes API returned no route for the selected locations.');
+  }
+
+  return {
+    route,
+    distanceMeters: Number(route.distanceMeters || 0),
+    durationMillis: Number(route.durationMillis || 0),
+    staticDurationMillis: Number(route.staticDurationMillis || route.durationMillis || 0),
+    viewport: route.viewport || null,
+  };
+}
+
+export function formatRouteDistance(distanceMeters) {
+  const meters = Number(distanceMeters || 0);
+  const km = meters / 1000;
+  return km < 1 ? `${Math.round(meters)} m` : `${km.toFixed(1)} km`;
+}
+
+export function formatRouteDuration(durationMillis) {
+  const minutes = Math.max(1, Math.round(Number(durationMillis || 0) / 60000));
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remaining = minutes % 60;
+  return remaining ? `${hours}h ${remaining}m` : `${hours}h`;
+}
+
+export function getRouteErrorMessage(error) {
+  const message = String(error?.message || error || 'Unknown routing error');
+
+  if (/PERMISSION_DENIED|ApiTargetBlocked|not authorized|not allowed/i.test(message)) {
+    return 'Google Routes API is not authorized for the current key/project.';
+  }
+  if (/billing|billing account|quota/i.test(message)) {
+    return 'Google Maps billing/quota is not available for the current project.';
+  }
+  if (/REQUEST_DENIED|INVALID_ARGUMENT|origin|destination/i.test(message)) {
+    return 'The route origin or destination could not be resolved.';
+  }
+  return 'Google could not calculate a driving route for this request.';
+}
 
 /**
  * Generates an SVG Data URI for the custom Patient Location marker

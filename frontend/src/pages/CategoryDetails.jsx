@@ -54,7 +54,7 @@ export default function CategoryDetails() {
     const missing = [];
     config.questions.forEach((q) => {
       const val = answersForCategory[q.id];
-      if (q.type === 'yes_no') return; // yes/no always has a default of 'No'
+      if (q.type === 'yes_no') return;
       if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '')) {
         missing.push(q.id);
       }
@@ -65,12 +65,44 @@ export default function CategoryDetails() {
       return;
     }
 
+    if (
+      !Number.isFinite(Number(basicInfo.patientLocation?.latitude)) ||
+      !Number.isFinite(Number(basicInfo.patientLocation?.longitude))
+    ) {
+      setToastMessage('Please select a resolved patient location before dispatching.');
+      setTimeout(() => setToastMessage(null), 3500);
+      return;
+    }
+
     setUnansweredFields([]);
-    setToastMessage(`Triage assessment completed for ${config.heading}. Step 3: Nearby Resources coming next.`);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 4500);
+
+    const newEmergency = {
+      id: `EM-${Date.now().toString().slice(-6)}`,
+      latitude: Number(basicInfo.patientLocation.latitude),
+      longitude: Number(basicInfo.patientLocation.longitude),
+      type: config.heading,
+      priority: basicInfo.consciousAndBreathing === false ? 'Critical' : 'High',
+      status: 'En Route',
+      ambulanceId: null,
+      assignedAmbulance: null,
+      hospitalId: null,
+      destinationHospital: 'Incident Location',
+      routeTarget: 'incident',
+      distanceKm: null,
+      eta: 'Calculating...',
+      location: basicInfo.patientLocation.address || basicInfo.location,
+      timeReported: 'Just now',
+      caller: 'Dispatcher Intake',
+      responseType: basicInfo.responseType || null,
+      casualties: basicInfo.casualties,
+      patientAge: basicInfo.age,
+      patientLocation: { ...basicInfo.patientLocation },
+      categoryAnswers: { ...answersForCategory },
+    };
+
+    navigate('/dashboard', { state: { createdEmergency: newEmergency } });
   };
+
 
   // ALS/BLS clicked on page 2 → show ambulance booked popup
   const handleResponseTypeClick = (type) => {

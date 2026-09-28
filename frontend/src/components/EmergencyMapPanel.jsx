@@ -203,7 +203,7 @@ export default function EmergencyMapPanel({
         if (pos) bounds.extend(pos);
       });
       mapInstanceRef.current.fitBounds(bounds, { top: 60, right: 40, bottom: 40, left: 40 });
-      triggerNotice('Showing 5 active ambulances within 5 km zone');
+      triggerNotice(`Showing ${availableAmbulances.length} available ambulances across operational hubs`);
     }
   };
 

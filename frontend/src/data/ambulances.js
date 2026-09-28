@@ -1,7 +1,13 @@
 /**
  * MediRoute Fleet Data — Operational Area: Pune, Maharashtra
- * 5 Active ambulances en route toward destination hospitals with calculated real distances & ETAs
+ * Active ambulances currently en route toward destination hospitals.
+ *
+ * Dispatchable/available ambulances are derived from the canonical ambulance-hub
+ * dataset so the dispatcher, ambulance page, and emergency map all reference the
+ * same vehicle IDs and physical hub locations.
  */
+import { ambulanceHubs } from './ambulanceHubs';
+
 export const ambulances = [
   {
     id: 'AMB-107',
@@ -76,92 +82,25 @@ export const ambulances = [
 ];
 
 /**
- * Available Ambulances Fleet — Ready for Instant Dispatch
- * Stationed at strategic municipal response depots across Pune
+ * Canonical dispatchable fleet derived from the ambulance-hub map.
+ *
+ * Each available ambulance inherits its hub's exact latitude/longitude, so
+ * selecting the nearest vehicle uses the same "spot" shown on the Ambulances tab.
  */
-export const availableAmbulances = [
-  {
-    id: 'AMB-201',
-    name: 'Kothrud Stand Unit 1',
-    station: 'Kothrud Response Depot (Paud Road)',
-    latitude: 18.5065,
-    longitude: 73.8115,
-    status: 'Available',
-    type: 'Advanced Life Support (ALS)',
-    driver: 'Prakash Raut',
-    contact: '+91 98230 11021',
-    equipment: ['Defibrillator', 'Transport Ventilator', 'Oxygen Support', 'Trauma Kit'],
-  },
-  {
-    id: 'AMB-202',
-    name: 'Deccan Quick Response',
-    station: 'Deccan Gymkhana Station (Near FC Road)',
-    latitude: 18.5170,
-    longitude: 73.8405,
-    status: 'Available',
-    type: 'Basic Life Support (BLS)',
-    driver: 'Mahesh Jagtap',
-    contact: '+91 98230 11022',
-    equipment: ['Oxygen Cylinder', 'First Aid Trauma Kit', 'Stretcher', 'AED'],
-  },
-  {
-    id: 'AMB-203',
-    name: 'Shivajinagar Mobile ICU',
-    station: 'Shivajinagar Emergency Hub',
-    latitude: 18.5315,
-    longitude: 73.8465,
-    status: 'Available',
-    type: 'Critical Care Unit (CCU)',
-    driver: 'Suresh Patil',
-    contact: '+91 98230 11023',
-    equipment: ['ICU Monitor', 'Transport Ventilator', 'Infusion Pump', 'Defibrillator'],
-  },
-  {
-    id: 'AMB-204',
-    name: 'Swargate Fast Response',
-    station: 'Swargate Stand (Near Sarasbaug)',
-    latitude: 18.5020,
-    longitude: 73.8570,
-    status: 'Available',
-    type: 'Advanced Life Support (ALS)',
-    driver: 'Nitin Chavan',
-    contact: '+91 98230 11024',
-    equipment: ['Defibrillator', 'Oxygen Unit', 'Spinal Board', 'Emergency Meds'],
-  },
-  {
-    id: 'AMB-205',
-    name: 'Erandwane Standby Unit',
-    station: 'Erandwane Station (Karve Road)',
-    latitude: 18.5015,
-    longitude: 73.8290,
-    status: 'Available',
-    type: 'Cardiac Mobile Unit',
-    driver: 'Ramesh Kadam',
-    contact: '+91 98230 11025',
-    equipment: ['12-Lead ECG', 'Cardiac Monitor', 'External Pacemaker', 'CPR Assist'],
-  },
-  {
-    id: 'AMB-206',
-    name: 'Aundh Baner Stand',
-    station: 'Aundh Emergency Post (Bremen Chowk)',
-    latitude: 18.5550,
-    longitude: 73.8050,
-    status: 'Available',
-    type: 'Advanced Life Support (ALS)',
-    driver: 'Kiran Deshmukh',
-    contact: '+91 98230 11026',
-    equipment: ['Defibrillator', 'Suction Machine', 'Multi-param Monitor'],
-  },
-  {
-    id: 'AMB-207',
-    name: 'Cantonment Rapid Unit',
-    station: 'Pune Camp Station (MG Road)',
-    latitude: 18.5150,
-    longitude: 73.8810,
-    status: 'Available',
-    type: 'Basic Life Support (BLS)',
-    driver: 'Anil Gaikwad',
-    contact: '+91 98230 11027',
-    equipment: ['Oxygen Delivery', 'AED', 'Basic Splints', 'Stretcher'],
-  },
-];
+export const availableAmbulances = ambulanceHubs.flatMap((hub) =>
+  hub.ambulances
+    .filter((ambulance) => ambulance.status === 'Available')
+    .map((ambulance) => ({
+      ...ambulance,
+      hubId: hub.id,
+      station: hub.name,
+      latitude: hub.lat,
+      longitude: hub.lng,
+      type:
+        ambulance.type === 'ALS'
+          ? 'Advanced Life Support (ALS)'
+          : ambulance.type === 'BLS'
+            ? 'Basic Life Support (BLS)'
+            : ambulance.type,
+    }))
+);

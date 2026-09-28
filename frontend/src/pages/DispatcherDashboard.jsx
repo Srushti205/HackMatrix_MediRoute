@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import TopNavbar from '../components/TopNavbar';
 import MapView from '../components/MapView';
 import DispatchPanel from '../components/DispatchPanel';
 import { mockEmergencies } from '../data/emergencies';
+import { availableAmbulances } from '../data/ambulances';
+import { calculateDistanceKm } from '../services/mapService';
 import { X, CheckCircle2 } from 'lucide-react';
 
 class MapErrorBoundary extends React.Component {
@@ -38,6 +40,7 @@ class MapErrorBoundary extends React.Component {
 
 export default function DispatcherDashboard() {
   const navigate = useNavigate();
+  const routeLocation = useLocation();
   const [emergencies, setEmergencies] = useState(mockEmergencies);
   const [selectedEmergencyId, setSelectedEmergencyId] = useState('EM-1042');
   const [activeNav, setActiveNav] = useState('Home');
@@ -46,9 +49,78 @@ export default function DispatcherDashboard() {
   const [newEmergencyLocation, setNewEmergencyLocation] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
 
-  const handleSelectEmergency = (emergency) => {
+  useEffect(() => {
+    const createdEmergency = routeLocation.state?.createdEmergency;
+    if (!createdEmergency?.id) return;
+
+    const responseType = createdEmergency.responseType;
+    const candidates = availableAmbulances
+      .filter((ambulance) => {
+        if (!responseType) return true;
+        const type = String(ambulance.type || '').toUpperCase();
+        return responseType === 'ALS'
+          ? type.includes('ALS') || type.includes('ADVANCED') || type.includes('CRITICAL CARE')
+          : type.includes('BLS') || type.includes('BASIC');
+      })
+      .map((ambulance) => ({
+        ambulance,
+        distanceKm: calculateDistanceKm(
+          ambulance.latitude,
+          ambulance.longitude,
+          createdEmergency.latitude,
+          createdEmergency.longitude
+        ),
+      }))
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+
+    const fallbackCandidates = availableAmbulances
+      .map((ambulance) => ({
+        ambulance,
+        distanceKm: calculateDistanceKm(
+          ambulance.latitude,
+          ambulance.longitude,
+          createdEmergency.latitude,
+          createdEmergency.longitude
+        ),
+      }))
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+
+    const selected = candidates[0] || fallbackCandidates[0];
+    const assignedEmergency = {
+      ...createdEmergency,
+      assignedAmbulance: selected?.ambulance.id || null,
+      ambulanceId: selected?.ambulance.id || null,
+      assignedAmbulanceType: selected?.ambulance.type || null,
+      assignedAmbulanceStation: selected?.ambulance.station || null,
+    };
+
+    setEmergencies((previous) => [
+      assignedEmergency,
+      ...previous.filter((item) => item.id !== assignedEmergency.id),
+    ]);
+    setSelectedEmergencyId(assignedEmergency.id);
+    setToastMessage(
+      selected
+        ? `${selected.ambulance.id} (${selected.ambulance.station}) dispatched from the nearest available spot to ${assignedEmergency.location}`
+        : `Emergency ${assignedEmergency.id} created — waiting for ambulance assignment`
+    );
+    window.setTimeout(() => setToastMessage(null), 4200);
+
+    // Consume the navigation payload so re-renders do not create the emergency again.
+    navigate('/dashboard', { replace: true, state: null });
+  }, [navigate, routeLocation.state]);
+
+  const handleSelectEmergency = useCallback((emergency) => {
     setSelectedEmergencyId(emergency.id);
-  };
+  }, []);
+
+  const handleRouteUpdate = useCallback((emergencyId, routeUpdate) => {
+    setEmergencies((previous) =>
+      previous.map((emergency) =>
+        emergency.id === emergencyId ? { ...emergency, ...routeUpdate } : emergency
+      )
+    );
+  }, []);
 
   const handleCreateEmergency = (e) => {
     e.preventDefault();
@@ -96,6 +168,7 @@ export default function DispatcherDashboard() {
               emergencies={emergencies}
               selectedEmergencyId={selectedEmergencyId}
               onSelectEmergency={handleSelectEmergency}
+              onRouteUpdate={handleRouteUpdate}
             />
           </MapErrorBoundary>
         </section>
