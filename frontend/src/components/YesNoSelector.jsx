@@ -2,7 +2,7 @@ import React from 'react';
 import { Check, X } from 'lucide-react';
 
 export default function YesNoSelector({
-  value = true,
+  value = null,
   onChange,
 }) {
   return (

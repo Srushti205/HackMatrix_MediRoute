@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNavbar from '../components/TopNavbar';
 import EmergencyCategoryGrid from '../components/EmergencyCategoryGrid';
@@ -13,7 +13,11 @@ import { ArrowRight, X, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function NewEmergency() {
   const navigate = useNavigate();
-  const { basicInfo, updateBasicInfo } = useEmergency();
+  const { basicInfo, updateBasicInfo, resetAll } = useEmergency();
+
+  useEffect(() => {
+    resetAll();
+  }, []);
 
   const selectedEmergencyCategory = basicInfo.selectedEmergencyCategory;
   const location = basicInfo.location;
@@ -57,8 +61,14 @@ export default function NewEmergency() {
   const validate = () => {
     if (!selectedEmergencyCategory) { setErrorMessage('Please select an emergency category.'); return false; }
     if (!location || location.trim() === '' || !basicInfo.patientLocation?.address) { setErrorMessage("Please select the patient's location."); return false; }
-    if (!casualties || casualties < 1) { setErrorMessage('Number of casualties must be at least 1.'); return false; }
-    if (age === '' || isNaN(age) || age < 0 || age > 130) { setErrorMessage('Please enter a valid patient age (0-130).'); return false; }
+    const isInfant = age === 'Infant' || age === '< 1 yr' || age === 0;
+    const isValidNumber = typeof age === 'number' && !isNaN(age) && age >= 1 && age <= 130;
+    const isValidNumericString = typeof age === 'string' && age !== '' && !isNaN(parseInt(age, 10)) && parseInt(age, 10) >= 1 && parseInt(age, 10) <= 130;
+
+    if (!isInfant && !isValidNumber && !isValidNumericString) {
+      setErrorMessage('Please enter a patient age (1 or above) or select Infant.');
+      return false;
+    }
     setErrorMessage('');
     return true;
   };

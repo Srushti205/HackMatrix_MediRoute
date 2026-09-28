@@ -5,9 +5,19 @@ import EmergencyMapPanel from '../components/EmergencyMapPanel';
 import CategoryHeader from '../components/category/CategoryHeader';
 import QuestionCard from '../components/category/QuestionCard';
 import { getCategoryConfig } from '../data/categoryQuestions';
+import { availableAmbulances } from '../data/ambulances';
+import { calculateDistanceKm } from '../services/mapService';
 import { useEmergency } from '../context/EmergencyContext';
 import ResponseTypeSelector from '../components/ResponseTypeSelector';
-import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  Ambulance,
+  X,
+} from 'lucide-react';
 
 export default function CategoryDetails() {
   const navigate = useNavigate();
@@ -33,6 +43,9 @@ export default function CategoryDetails() {
   // Validation & feedback state
   const [unansweredFields, setUnansweredFields] = useState([]);
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Model ranking modal state
+  const [showRankingModal, setShowRankingModal] = useState(false);
 
   const handleFieldChange = (fieldId, value) => {
     updateCategoryAnswer(config.id, fieldId, value);
@@ -69,40 +82,61 @@ export default function CategoryDetails() {
       !Number.isFinite(Number(basicInfo.patientLocation?.latitude)) ||
       !Number.isFinite(Number(basicInfo.patientLocation?.longitude))
     ) {
-      setToastMessage('Please select a resolved patient location before dispatching.');
+      setToastMessage('Please select a resolved patient location before proceeding.');
       setTimeout(() => setToastMessage(null), 3500);
       return;
     }
 
     setUnansweredFields([]);
+    setShowRankingModal(true);
+  };
+
+  // User clicks Next inside the Pop-up Modal to go to Simulated ETA & closest ambulance routing
+  const handleProceedToSimulatedEta = () => {
+    const patientLat = Number(basicInfo.patientLocation.latitude);
+    const patientLng = Number(basicInfo.patientLocation.longitude);
+
+    // Find the ambulance closest to the patient's location
+    const sortedAmbulances = availableAmbulances
+      .map((amb) => ({
+        ambulance: amb,
+        distanceKm: calculateDistanceKm(amb.latitude, amb.longitude, patientLat, patientLng),
+      }))
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+
+    const closest = sortedAmbulances[0]?.ambulance || availableAmbulances[0];
+    const closestDist = sortedAmbulances[0]?.distanceKm || 2.0;
+    const closestEta = Math.max(2, Math.round(closestDist * 2.1 + 1));
 
     const newEmergency = {
       id: `EM-${Date.now().toString().slice(-6)}`,
-      latitude: Number(basicInfo.patientLocation.latitude),
-      longitude: Number(basicInfo.patientLocation.longitude),
+      latitude: patientLat,
+      longitude: patientLng,
       type: config.heading,
       priority: basicInfo.consciousAndBreathing === false ? 'Critical' : 'High',
       status: 'En Route',
-      ambulanceId: null,
-      assignedAmbulance: null,
+      ambulanceId: closest.id,
+      assignedAmbulance: closest.id,
+      assignedAmbulanceType: closest.type,
+      assignedAmbulanceStation: closest.station,
       hospitalId: null,
-      destinationHospital: 'Incident Location',
-      routeTarget: 'incident',
-      distanceKm: null,
-      eta: 'Calculating...',
+      destinationHospital: null,
+      routeTarget: 'incident', // <-- Explicitly triggers route from closest ambulance to patient/incident
+      distanceKm: `${closestDist} km`,
+      eta: `${closestEta} min`,
       location: basicInfo.patientLocation.address || basicInfo.location,
       timeReported: 'Just now',
       caller: 'Dispatcher Intake',
-      responseType: basicInfo.responseType || null,
+      responseType: basicInfo.responseType || (closest.type?.includes('ALS') ? 'ALS' : 'BLS'),
       casualties: basicInfo.casualties,
       patientAge: basicInfo.age,
       patientLocation: { ...basicInfo.patientLocation },
       categoryAnswers: { ...answersForCategory },
     };
 
+    setShowRankingModal(false);
     navigate('/dashboard', { state: { createdEmergency: newEmergency } });
   };
-
 
   // ALS/BLS clicked on page 2 → show ambulance booked popup
   const handleResponseTypeClick = (type) => {
@@ -150,7 +184,12 @@ export default function CategoryDetails() {
                       <QuestionCard
                         index={index}
                         question={question}
-                        value={question.type === 'yes_no' && (answersForCategory[question.id] === null || answersForCategory[question.id] === undefined) ? 'No' : answersForCategory[question.id]}
+                        value={
+                          question.type === 'yes_no' &&
+                          (answersForCategory[question.id] === null || answersForCategory[question.id] === undefined)
+                            ? 'No'
+                            : answersForCategory[question.id]
+                        }
                         unitValue={question.unitKey ? answersForCategory[question.unitKey] : undefined}
                         onChange={handleFieldChange}
                         onUnitChange={handleUnitChange}
@@ -204,6 +243,58 @@ export default function CategoryDetails() {
           </div>
         </div>
       </div>
+
+      {/* ── Clean Center Pop-up Modal: Hospital Triage Ranking Notice ── */}
+      {showRankingModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-[#E6ECE3] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Modal Header Icon & Close */}
+            <div className="p-6 pb-2 flex items-start justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-[#E8F6E9] border border-[#71BC75]/30 flex items-center justify-center text-[#00A551] shadow-xs">
+                <Sparkles className="w-6 h-6" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowRankingModal(false)}
+                className="w-8 h-8 rounded-xl hover:bg-[#F1F5F9] text-[#687280] hover:text-[#1A2741] flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body: User's exact prompt text */}
+            <div className="px-6 py-4 space-y-2.5 text-center sm:text-left">
+              <h2 className="text-lg sm:text-xl font-black text-[#1A2741] tracking-tight leading-snug">
+                Hospital triage ranking will be done after Model training.
+              </h2>
+              <p className="text-xs sm:text-sm text-[#687280] font-medium leading-relaxed">
+                Click next to go to the Simulated ETA.
+              </p>
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="p-6 pt-3 bg-white flex items-center justify-end gap-3 border-t border-[#F0F4EF]">
+              <button
+                type="button"
+                onClick={() => setShowRankingModal(false)}
+                className="px-5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs font-bold text-[#687280] hover:text-[#1A2741] hover:bg-[#FAF9F5] transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleProceedToSimulatedEta}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#00A551] hover:bg-[#008f45] active:bg-[#007b3b] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all cursor-pointer"
+              >
+                <span>Next</span>
+                <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Feedback / Ambulance Booked Toast ── */}
       {toastMessage && (

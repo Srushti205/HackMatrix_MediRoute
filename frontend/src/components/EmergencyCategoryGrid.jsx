@@ -26,7 +26,7 @@ export const EMERGENCY_CATEGORIES = [
 ];
 
 export default function EmergencyCategoryGrid({
-  selectedCategory = 'Trauma',
+  selectedCategory = null,
   onSelectCategory,
 }) {
   return (

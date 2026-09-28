@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import TopNavbar from '../components/TopNavbar';
 import { dailyMetrics, emergencyTripsLog } from '../data/logisticsData';
+import { useEmergency } from '../context/EmergencyContext';
 import {
   Activity,
   CheckCircle2,
@@ -25,6 +26,9 @@ import {
 } from 'lucide-react';
 
 export default function LogisticsPage() {
+  const { tripsLog = emergencyTripsLog } = useEmergency();
+  const currentTrips = tripsLog && tripsLog.length > 0 ? tripsLog : emergencyTripsLog;
+
   const [activeTab, setActiveTab] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'COMPLETED'
   const [priorityFilter, setPriorityFilter] = useState('ALL'); // 'ALL' | 'Critical' | 'High' | 'Medium'
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +36,7 @@ export default function LogisticsPage() {
 
   // Filtered trips
   const filteredTrips = useMemo(() => {
-    return emergencyTripsLog.filter((trip) => {
+    return currentTrips.filter((trip) => {
       // Tab filter
       if (activeTab === 'ACTIVE' && trip.status !== 'Active') return false;
       if (activeTab === 'COMPLETED' && trip.status !== 'Completed') return false;
@@ -55,11 +59,14 @@ export default function LogisticsPage() {
 
       return true;
     });
-  }, [activeTab, priorityFilter, searchTerm]);
+  }, [currentTrips, activeTab, priorityFilter, searchTerm]);
 
-  // Counts
-  const activeCount = useMemo(() => emergencyTripsLog.filter((t) => t.status === 'Active').length, []);
-  const completedCount = useMemo(() => emergencyTripsLog.filter((t) => t.status === 'Completed').length, []);
+  // Dynamic counts
+  const totalCount = useMemo(() => currentTrips.length, [currentTrips]);
+  const activeCount = useMemo(() => currentTrips.filter((t) => t.status === 'Active').length, [currentTrips]);
+  const completedCount = useMemo(() => currentTrips.filter((t) => t.status === 'Completed').length, [currentTrips]);
+  const alsCount = useMemo(() => currentTrips.filter((t) => t.responseType === 'ALS').length, [currentTrips]);
+  const blsCount = useMemo(() => currentTrips.filter((t) => t.responseType === 'BLS').length, [currentTrips]);
 
   return (
     <div className="min-h-screen bg-[#FAF9F5] flex flex-col font-sans select-none text-[#4A4A4A]">
@@ -97,7 +104,7 @@ export default function LogisticsPage() {
             </div>
             <div className="mt-3">
               <div className="text-2xl sm:text-3xl font-black text-[#1A2741] tracking-tight">
-                {dailyMetrics.totalEmergenciesToday}
+                {totalCount}
               </div>
               <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-[#687280]">
                 <span className="text-[#00A551] font-bold">100%</span> logged &amp; tracked
@@ -157,7 +164,7 @@ export default function LogisticsPage() {
               <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-[#687280]">
                 <span>Total: <strong>{dailyMetrics.totalKmTraveled}</strong></span>
                 <span>&bull;</span>
-                <span className="text-[#2563EB] font-bold">{dailyMetrics.alsTripsCount} ALS / {dailyMetrics.blsTripsCount} BLS</span>
+                <span className="text-[#2563EB] font-bold">{alsCount} ALS / {blsCount} BLS</span>
               </div>
             </div>
           </div>
@@ -176,7 +183,7 @@ export default function LogisticsPage() {
                   : 'text-[#687280] hover:text-[#1A2741]'
               }`}
             >
-              All Trips ({emergencyTripsLog.length})
+              All Trips ({totalCount})
             </button>
             <button
               type="button"

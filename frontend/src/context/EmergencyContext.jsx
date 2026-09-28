@@ -3,17 +3,13 @@ import React, { createContext, useContext, useState } from 'react';
 const EmergencyContext = createContext(null);
 
 export const DEFAULT_BASIC_INFO = {
-  selectedEmergencyCategory: 'Trauma',
-  location: 'Shivajinagar, Pune, Maharashtra, India',
-  patientLocation: {
-    address: 'Shivajinagar, Pune, Maharashtra, India',
-    latitude: 18.5314,
-    longitude: 73.8446,
-  },
+  selectedEmergencyCategory: null,
+  location: '',
+  patientLocation: null,
   casualties: 1,
-  consciousAndBreathing: true,
-  age: 28,
-  responseType: null, // 'ALS' | 'BLS' | null (initially unselected)
+  consciousAndBreathing: null,
+  age: '',
+  responseType: null, // 'ALS' | 'BLS' | null
 };
 
 export const INITIAL_CATEGORY_ANSWERS = {
@@ -96,9 +92,12 @@ export const INITIAL_CATEGORY_ANSWERS = {
   },
 };
 
+import { emergencyTripsLog } from '../data/logisticsData';
+
 export function EmergencyProvider({ children }) {
   const [basicInfo, setBasicInfo] = useState(DEFAULT_BASIC_INFO);
   const [categoryAnswers, setCategoryAnswers] = useState(INITIAL_CATEGORY_ANSWERS);
+  const [tripsLog, setTripsLog] = useState(emergencyTripsLog);
 
   const updateBasicInfo = (updates) => {
     setBasicInfo((prev) => ({ ...prev, ...updates }));
@@ -119,6 +118,13 @@ export function EmergencyProvider({ children }) {
     setCategoryAnswers(INITIAL_CATEGORY_ANSWERS);
   };
 
+  const addTripToLog = (newTrip) => {
+    setTripsLog((prev) => [
+      newTrip,
+      ...prev.filter((t) => t.tripId !== newTrip.tripId && t.emergencyId !== newTrip.emergencyId),
+    ]);
+  };
+
   return (
     <EmergencyContext.Provider
       value={{
@@ -127,6 +133,8 @@ export function EmergencyProvider({ children }) {
         categoryAnswers,
         updateCategoryAnswer,
         resetAll,
+        tripsLog,
+        addTripToLog,
       }}
     >
       {children}
