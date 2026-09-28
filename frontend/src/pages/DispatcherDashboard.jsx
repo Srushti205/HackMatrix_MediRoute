@@ -38,14 +38,16 @@ class MapErrorBoundary extends React.Component {
   }
 }
 
-import { useEmergency } from '../context/EmergencyContext';
-
 export default function DispatcherDashboard() {
   const navigate = useNavigate();
   const routeLocation = useLocation();
-  const { addTripToLog } = useEmergency();
   const [emergencies, setEmergencies] = useState(mockEmergencies);
-  const [selectedEmergencyId, setSelectedEmergencyId] = useState('EM-1042');
+  // Default to a hospital-bound emergency so the first map view shows a meaningful
+  // patient-to-hospital route instead of an arbitrary ambulance-to-incident corridor.
+  const defaultEmergencyId = mockEmergencies.find(
+    (emergency) => emergency.status === 'Transporting Patient' && (emergency.hospitalId || emergency.destinationHospital)
+  )?.id || mockEmergencies[0]?.id || null;
+  const [selectedEmergencyId, setSelectedEmergencyId] = useState(defaultEmergencyId);
   const [activeNav, setActiveNav] = useState('Home');
   const [showNewEmergencyModal, setShowNewEmergencyModal] = useState(false);
   const [newEmergencyType, setNewEmergencyType] = useState('Trauma / Injury');
@@ -102,41 +104,6 @@ export default function DispatcherDashboard() {
       ...previous.filter((item) => item.id !== assignedEmergency.id),
     ]);
     setSelectedEmergencyId(assignedEmergency.id);
-
-    // Sync to Logistics Trips Log
-    if (addTripToLog) {
-      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const distText = selected ? `${selected.distanceKm.toFixed(1)} km` : (createdEmergency.distanceKm || '2.0 km');
-      const etaText = createdEmergency.eta || `${Math.max(2, Math.round((selected?.distanceKm || 2) * 2.1 + 1))} min`;
-
-      addTripToLog({
-        tripId: `TRIP-${assignedEmergency.id.replace('EM-', '')}`,
-        emergencyId: assignedEmergency.id,
-        status: 'Active',
-        subStatus: 'En Route to Scene',
-        type: assignedEmergency.type || 'Emergency Intake',
-        category: assignedEmergency.type || 'Medical Response',
-        priority: assignedEmergency.priority || 'High',
-        responseType: assignedEmergency.responseType || (selected?.ambulance.type?.includes('ALS') ? 'ALS' : 'BLS'),
-        ambulanceId: selected?.ambulance.id || assignedEmergency.ambulanceId || 'AMB-101',
-        driver: selected?.ambulance.driver || 'Prakash Raut',
-        driverContact: selected?.ambulance.contact || '+91 98230 11021',
-        callerName: assignedEmergency.caller || 'Dispatcher Intake',
-        callerPhone: '+91 98220 12345',
-        pickupLocation: assignedEmergency.location || 'Pune Central',
-        destinationHospital: assignedEmergency.destinationHospital || 'Hospital Triage in Progress',
-        distanceKm: distText,
-        eta: etaText,
-        timeReported: nowTime,
-        dispatchTime: nowTime,
-        pickupTime: null,
-        completionTime: null,
-        tripDuration: 'Just Dispatched',
-        summary: `Live dispatch for ${assignedEmergency.type} at ${assignedEmergency.location}. Units: ${selected?.ambulance.id || 'Ambulance'} (${assignedEmergency.responseType || 'ALS'}).`,
-        vitals: { bp: '120/80', pulse: '84 bpm', spo2: '98%', temp: '98.6°F' },
-      });
-    }
-
     setToastMessage(
       selected
         ? `${selected.ambulance.id} (${selected.ambulance.station}) dispatched from the nearest available spot to ${assignedEmergency.location}`
@@ -146,7 +113,7 @@ export default function DispatcherDashboard() {
 
     // Consume the navigation payload so re-renders do not create the emergency again.
     navigate('/dashboard', { replace: true, state: null });
-  }, [addTripToLog, navigate, routeLocation.state]);
+  }, [navigate, routeLocation.state]);
 
   const handleSelectEmergency = useCallback((emergency) => {
     setSelectedEmergencyId(emergency.id);

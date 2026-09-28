@@ -36,7 +36,7 @@ export default function RoleCard({
       </div>
 
       {/* ── Content: Title and Description ── */}
-      <div className="flex flex-col items-center text-center px-1 mb-8">
+      <div className="min-h-[84px] flex flex-col items-center justify-start text-center px-1 mb-8">
         <h2 className="text-2xl sm:text-[26px] font-bold text-[#2A362C] tracking-tight mb-2.5">
           {title}
         </h2>

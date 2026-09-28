@@ -52,7 +52,7 @@ export default function RoleSelection() {
             title="Simulated Hospital"
             illustration={HospitalIllustration}
             buttonText="Continue as Hospital →"
-            buttonColor="primary"
+            buttonColor="dark"
             to="/login/hospital"
           />
         </section>

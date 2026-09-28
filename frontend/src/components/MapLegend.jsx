@@ -39,7 +39,7 @@ export default function MapLegend({ className = '' }) {
         <div className="flex items-center gap-2 pt-1 border-t border-[#F0F4EF]">
           <span className="w-5 h-1 rounded-full bg-[#00A551]" />
           <span className="text-[10px] text-[#687280] font-medium leading-tight">
-            Ambulance ➔ Hospital Corridor
+            Live route · Selected emergency
           </span>
         </div>
       </div>
